@@ -1,6 +1,4 @@
-# LUMEON: The Collaborative Platform
-
-LUMEON is a web application designed to connect tech enthusiasts, creators, and developers. It serves as a community hub for sharing skills, finding collaborators for projects, and engaging in real-time discussions.
+# LUMEON
 
 ---
 
@@ -62,4 +60,5 @@ The application will launch in your default browser. Since the project uses Fire
 * **Direct Messaging:** Add a private chat feature for users to connect one-on-one.
 * **Personal Portfolios:** Create a dedicated section on user profiles to showcase projects and accomplishments.
 * **Advanced Search:** Implement robust search and filtering options for the Projects and Skill Swap pages to make discovery easier.
+
 ```eof
