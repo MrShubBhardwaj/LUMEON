@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUMEON - Community Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+        .chat-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            display: flex;
+            flex-direction: column;
+            height: 70vh;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background-color: white;
+            overflow: hidden;
+        }
+        .chat-box {
+            flex-grow: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .message {
+            max-width: 80%;
+            padding: 0.75rem 1rem;
+            border-radius: 1.25rem;
+            word-wrap: break-word;
+        }
+        .sent {
+            align-self: flex-end;
+            background-color: #F4D754;
+            color: #333;
+            border-top-right-radius: 0.25rem;
+        }
+        .received {
+            align-self: flex-start;
+            background-color: #e5e7eb;
+            color: #333;
+            border-top-left-radius: 0.25rem;
+        }
+        .chat-input {
+            display: flex;
+            padding: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            border-radius: 0.5rem 0.5rem 0 0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .tab-button.active {
+            background-color: white;
+            color: #333;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="index.html" class="flex items-center space-x-2">
+                <img src="https://i.ibb.co/gL13jDnv/Whats-App-Image-2025-09-13-at-12-14-08-e1e86b28.jpg" alt="LUMEON Logo" class="w-10 h-10 rounded-full" id="site-logo">
+                <span class="text-2xl font-bold text-[#333333]" id="site-name">LUMEON</span>
+            </a>
+            <nav class="hidden md:flex items-center space-x-6">
+                <a href="projects.html" class="hover:text-amber-500 transition-colors">Projects</a>
+                <a href="skill-swap.html" class="hover:text-amber-500 transition-colors">Skill Swap</a>
+                <a href="community.html" class="hover:text-amber-500 transition-colors">Community</a>
+            </nav>
+            <div id="nav-auth" class="flex items-center space-x-4">
+                <span class="text-sm text-gray-500">Loading...</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 md:py-16">
+        <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">Community Chat</h1>
+        <div class="chat-container">
+            <div class="flex justify-center bg-gray-200">
+                <button id="general-tab" class="tab-button active">General Chat</button>
+                <button id="technical-tab" class="tab-button">Technical Chat</button>
+            </div>
+            <div id="chat-box" class="chat-box">
+                <!-- Chat messages will be loaded here -->
+            </div>
+            <div id="chat-input-container" class="chat-input">
+                <input type="text" id="message-input" placeholder="Type a message..." class="flex-grow rounded-full px-4 py-2 bg-gray-100 border border-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-colors">
+                <button id="send-button" class="bg-amber-500 text-white font-bold py-2 px-4 ml-4 rounded-full hover:bg-amber-600 transition-colors">
+                    Send
+                </button>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="bg-gray-800 text-white py-8 mt-auto">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 LUMEON. All rights reserved.</p>
+            <div class="mt-4">
+                <p>Support: <a href="mailto:support@lumeon.website" class="text-amber-400 hover:underline">support@lumeon.website</a></p>
+                <p>Phone: <a href="tel:+911234567890" class="text-amber-400 hover:underline">+91 1234567890</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, query, doc, addDoc, getDoc, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        setLogLevel('debug');
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyBUUZ4MruQeS0WS4YI8GKokQ4W02q0qjqI",
+            authDomain: "hackthon-6413f.firebaseapp.com",
+            projectId: "hackthon-6413f",
+            storageBucket: "hackthon-6413f.firebasestorage.app",
+            messagingSenderId: "586911560054",
+            appId: "1:586911560054:web:b16b98d667d59bb5ff0a57",
+            measurementId: "G-LTLHTDHJTJ"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        const navAuth = document.getElementById('nav-auth');
+        const chatBox = document.getElementById('chat-box');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const generalTab = document.getElementById('general-tab');
+        const technicalTab = document.getElementById('technical-tab');
+        
+        let userProfile = null;
+        let unsubscribeChat = null;
+        let currentChatType = 'general';
+
+        async function updateNavProfile(user) {
+            if (user) {
+                const docRef = doc(db, `artifacts/${appId}/users/${user.uid}`);
+                const docSnap = await getDoc(docRef);
+                userProfile = docSnap.exists() ? docSnap.data() : { name: "User", photoUrl: "https://placehold.co/150x150/f4d754/333333?text=L" };
+                
+                navAuth.innerHTML = `
+                    <div class="relative group cursor-pointer">
+                        <div class="flex items-center space-x-2">
+                            <img src="${userProfile.photoUrl}" alt="${userProfile.name}" class="w-8 h-8 rounded-full border-2 border-amber-500">
+                            <span class="font-medium text-gray-700">${userProfile.name}</span>
+                        </div>
+                        <div class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl py-2 hidden group-hover:block transition-all duration-300 z-50">
+                            <a href="profile.html?userId=${user.uid}" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">My Profile</a>
+                            <button id="logout-button" class="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">Logout</button>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('logout-button').addEventListener('click', async () => {
+                    await signOut(auth);
+                    window.location.href = 'index.html';
+                });
+
+            } else {
+                navAuth.innerHTML = `<a href="auth.html" class="bg-amber-500 text-white font-bold py-2 px-4 rounded-full hover:bg-amber-600 transition-colors">Login / Register</a>`;
+            }
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            await updateNavProfile(user);
+            if (!user) {
+                try {
+                     const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    }
+                } catch (error) {
+                    console.error("Authentication failed: ", error);
+                }
+            }
+        });
+
+        const loadChat = (chatType) => {
+            if (unsubscribeChat) {
+                unsubscribeChat();
+            }
+
+            const messagesCollectionRef = collection(db, `artifacts/${appId}/public/data/${chatType}_messages`);
+            const q = query(messagesCollectionRef, orderBy('timestamp'));
+
+            unsubscribeChat = onSnapshot(q, (snapshot) => {
+                chatBox.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const message = doc.data();
+                    const isSentByCurrentUser = auth.currentUser && message.uid === auth.currentUser.uid;
+                    const messageElement = document.createElement('div');
+                    messageElement.classList.add('message', isSentByCurrentUser ? 'sent' : 'received');
+                    
+                    const senderName = message.name || 'Anonymous';
+                    const messageContent = message.text;
+                    
+                    messageElement.innerHTML = `
+                        <span class="font-bold text-sm">${senderName}</span>
+                        <p class="text-sm">${messageContent}</p>
+                    `;
+                    chatBox.appendChild(messageElement);
+                });
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+        };
+
+        const handleTabClick = (chatType) => {
+            currentChatType = chatType;
+            generalTab.classList.toggle('active', chatType === 'general');
+            technicalTab.classList.toggle('active', chatType === 'technical');
+            loadChat(chatType);
+        };
+
+        generalTab.addEventListener('click', () => handleTabClick('general'));
+        technicalTab.addEventListener('click', () => handleTabClick('technical'));
+
+        // Initial load of the general chat
+        loadChat('general');
+
+        sendButton.addEventListener('click', async () => {
+            const messageText = messageInput.value.trim();
+            const user = auth.currentUser;
+            if (!user) {
+                console.log('User not logged in. Cannot send message.');
+                return;
+            }
+            if (messageText === '') {
+                return;
+            }
+
+            try {
+                const messagesCollectionRef = collection(db, `artifacts/${appId}/public/data/${currentChatType}_messages`);
+                await addDoc(messagesCollectionRef, {
+                    text: messageText,
+                    uid: user.uid,
+                    name: userProfile.name,
+                    timestamp: Date.now()
+                });
+                messageInput.value = '';
+            } catch (error) {
+                console.error("Error sending message:", error);
+            }
+        });
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendButton.click();
+            }
+        });
+    </script>
+</body>
+</html>

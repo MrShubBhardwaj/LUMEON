@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUMEON - Skill Swap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="index.html" class="flex items-center space-x-2">
+                <img src="https://i.ibb.co/gL13jDnv/Whats-App-Image-2025-09-13-at-12-14-08-e1e86b28.jpg" alt="LUMEON Logo" class="w-10 h-10 rounded-full" id="site-logo">
+                <span class="text-2xl font-bold text-[#333333]" id="site-name">LUMEON</span>
+            </a>
+            <nav class="hidden md:flex items-center space-x-6">
+                <a href="projects.html" class="hover:text-amber-500 transition-colors">Projects</a>
+                <a href="skill-swap.html" class="hover:text-amber-500 transition-colors">Skill Swap</a>
+                <a href="community.html" class="hover:text-amber-500 transition-colors">Community</a>
+            </nav>
+            <div id="nav-auth" class="flex items-center space-x-4">
+                <span class="text-sm text-gray-500">Loading...</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 md:py-16">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">Skill Swap</h1>
+
+            <div id="skill-form-container" class="bg-white p-6 rounded-2xl shadow-lg mb-8 hidden">
+                <h2 class="text-2xl font-bold mb-4">Share Your Skill</h2>
+                <form id="post-skill-form" class="space-y-4">
+                    <div>
+                        <label for="skill-name" class="block text-sm font-medium text-gray-700">Skill</label>
+                        <input type="text" id="skill-name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                    </div>
+                    <div>
+                        <label for="skill-description" class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea id="skill-description" rows="4" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+                    </div>
+                    <div>
+                        <label for="contact-info" class="block text-sm font-medium text-gray-700">Contact Info (e.g., Email, Phone)</label>
+                        <input type="text" id="contact-info" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                    </div>
+                    <div id="form-message" class="text-sm font-medium"></div>
+                    <button type="submit" id="post-skill-button" class="w-full bg-amber-500 text-white py-2 px-4 rounded-full font-bold hover:bg-amber-600 transition-colors disabled:bg-amber-300" disabled>
+                        Loading...
+                    </button>
+                </form>
+            </div>
+
+            <div id="skills-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Skills will be dynamically loaded here -->
+            </div>
+        </div>
+    </main>
+    
+    <footer class="bg-gray-800 text-white py-8 mt-auto">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 LUMEON. All rights reserved.</p>
+            <div class="mt-4">
+                <p>Support: <a href="mailto:support@lumeon.website" class="text-amber-400 hover:underline">support@lumeon.website</a></p>
+                <p>Phone: <a href="tel:+911234567890" class="text-amber-400 hover:underline">+91 1234567890</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, getDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        setLogLevel('debug');
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyBUUZ4MruQeS0WS4YI8GKokQ4W02q0qjqI",
+            authDomain: "hackthon-6413f.firebaseapp.com",
+            projectId: "hackthon-6413f",
+            storageBucket: "hackthon-6413f.firebasestorage.app",
+            messagingSenderId: "586911560054",
+            appId: "1:586911560054:web:b16b98d667d59bb5ff0a57",
+            measurementId: "G-LTLHTDHJTJ"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const navAuth = document.getElementById('nav-auth');
+        const skillsList = document.getElementById('skills-list');
+        const skillFormContainer = document.getElementById('skill-form-container');
+        const postSkillForm = document.getElementById('post-skill-form');
+        const formMessage = document.getElementById('form-message');
+        const postSkillButton = document.getElementById('post-skill-button');
+
+        const showMessage = (message, isError = false) => {
+            formMessage.textContent = message;
+            formMessage.className = `text-sm font-medium ${isError ? 'text-red-500' : 'text-green-500'}`;
+        };
+
+        let userProfile = null;
+
+        async function updateNavProfile(user) {
+            if (user) {
+                const docRef = doc(db, `artifacts/${appId}/users/${user.uid}`);
+                const docSnap = await getDoc(docRef);
+                userProfile = docSnap.exists() ? docSnap.data() : { name: user.displayName || "User", photoUrl: user.photoURL || '' };
+                
+                navAuth.innerHTML = `
+                    <div class="relative group cursor-pointer">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-medium text-gray-700">${userProfile.name}</span>
+                        </div>
+                        <div class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl py-2 hidden group-hover:block transition-all duration-300 z-50">
+                            <a href="profile.html?userId=${user.uid}" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">My Profile</a>
+                            <button id="logout-button" class="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">Logout</button>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('logout-button').addEventListener('click', async () => {
+                    await signOut(auth);
+                    window.location.href = 'index.html';
+                });
+
+                skillFormContainer.classList.remove('hidden');
+                postSkillButton.disabled = false;
+                postSkillButton.textContent = 'Post Skill';
+
+            } else {
+                navAuth.innerHTML = `<a href="auth.html" class="bg-amber-500 text-white font-bold py-2 px-4 rounded-full hover:bg-amber-600 transition-colors">Login / Register</a>`;
+                skillFormContainer.classList.add('hidden');
+                postSkillButton.disabled = true;
+                postSkillButton.textContent = 'Login to Post';
+            }
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            await updateNavProfile(user);
+            if (!user) {
+                try {
+                     const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    }
+                } catch (error) {
+                    console.error("Authentication failed: ", error);
+                }
+            }
+        });
+
+        const skillsCollectionRef = collection(db, `artifacts/${appId}/public/data/skills`);
+        onSnapshot(skillsCollectionRef, (snapshot) => {
+            skillsList.innerHTML = '';
+            const skills = [];
+            snapshot.forEach((doc) => {
+                skills.push({ id: doc.id, ...doc.data() });
+            });
+            skills.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            skills.forEach(skill => {
+                const skillElement = document.createElement('div');
+                skillElement.classList.add('bg-white', 'p-6', 'rounded-2xl', 'shadow-lg');
+                skillElement.innerHTML = `
+                    <h2 class="text-xl font-bold text-gray-800">${skill.skill}</h2>
+                    <p class="text-sm text-gray-500 mb-2">
+                        Offered by <span class="font-bold text-amber-500">${skill.owner.name}</span>
+                        <br>Contact: <span class="text-gray-600">${skill.contactInfo}</span>
+                    </p>
+                    <p class="text-gray-600">${skill.description}</p>
+                `;
+                skillsList.appendChild(skillElement);
+            });
+        });
+
+        postSkillForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (!user) {
+                showMessage('You must be logged in to post a skill.', true);
+                return;
+            }
+
+            if (!userProfile || !userProfile.name) {
+                showMessage('User profile data is not available. Please wait or refresh the page.', true);
+                return;
+            }
+
+            const skillName = document.getElementById('skill-name').value;
+            const description = document.getElementById('skill-description').value;
+            const contactInfo = document.getElementById('contact-info').value;
+
+            try {
+                await addDoc(collection(db, `artifacts/${appId}/public/data/skills`), {
+                    skill: skillName,
+                    description,
+                    contactInfo,
+                    owner: {
+                        uid: user.uid,
+                        name: userProfile.name
+                    },
+                    timestamp: Date.now()
+                });
+                showMessage('Skill posted successfully!', false);
+                postSkillForm.reset();
+            } catch (error) {
+                console.error("Error posting skill:", error);
+                showMessage(`Error posting skill: ${error.message}`, true);
+            }
+        });
+    </script>
+</body>
+</html>

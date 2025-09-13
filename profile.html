@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUMEON - Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="index.html" class="flex items-center space-x-2">
+                <img src="https://i.ibb.co/gL13jDnv/Whats-App-Image-2025-09-13-at-12-14-08-e1e86b28.jpg" alt="LUMEON Logo" class="w-10 h-10 rounded-full" id="site-logo">
+                <span class="text-2xl font-bold text-[#333333]" id="site-name">LUMEON</span>
+            </a>
+            <nav class="hidden md:flex items-center space-x-6">
+                <a href="projects.html" class="hover:text-amber-500 transition-colors">Projects</a>
+                <a href="skill-swap.html" class="hover:text-amber-500 transition-colors">Skill Swap</a>
+                <a href="community.html" class="hover:text-amber-500 transition-colors">Community</a>
+            </nav>
+            <div id="nav-auth" class="flex items-center space-x-4">
+                <span class="text-sm text-gray-500">Loading...</span>
+            </div>
+        </div>
+    </header>
+    <main class="container mx-auto px-4 py-8 md:py-16">
+        <div class="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
+            <div class="flex flex-col items-center text-center mb-8">
+                <img id="profile-photo" class="w-32 h-32 rounded-full border-4 border-amber-500 mb-4" src="https://placehold.co/150x150/f4d754/333333?text=L" alt="Profile Photo">
+                <h1 id="profile-name" class="text-3xl font-bold text-gray-900">Loading...</h1>
+                <p id="profile-email" class="text-gray-500">Loading...</p>
+            </div>
+            
+            <div class="text-left mb-8">
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Bio</h2>
+                <p id="profile-bio" class="text-gray-600 mb-4">Loading...</p>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Contact</h2>
+                <p class="text-gray-600"><strong>Phone:</strong> <span id="profile-phone">Loading...</span></p>
+            </div>
+            
+            <hr class="my-8">
+            
+            <form id="edit-profile-form" class="hidden space-y-4">
+                <h2 class="text-2xl font-bold text-gray-800 text-center mb-4">Edit Profile</h2>
+                <div>
+                    <label for="edit-name" class="block text-gray-700 font-medium mb-1">Name</label>
+                    <input type="text" id="edit-name" class="w-full p-3 rounded-lg border-2 focus:outline-none focus:border-amber-500" required>
+                </div>
+                <div>
+                    <label for="edit-phone" class="block text-gray-700 font-medium mb-1">Phone Number</label>
+                    <input type="text" id="edit-phone" class="w-full p-3 rounded-lg border-2 focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label for="edit-photoUrl" class="block text-gray-700 font-medium mb-1">Profile Photo URL</label>
+                    <input type="url" id="edit-photoUrl" class="w-full p-3 rounded-lg border-2 focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label for="edit-bio" class="block text-gray-700 font-medium mb-1">Bio</label>
+                    <textarea id="edit-bio" rows="4" class="w-full p-3 rounded-lg border-2 focus:outline-none focus:border-amber-500"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-amber-500 text-white font-bold py-3 rounded-lg hover:bg-amber-600 transition-colors">Save Changes</button>
+                <div id="message-box" class="hidden p-4 rounded-lg mt-4 text-sm text-center"></div>
+            </form>
+        </div>
+    </main>
+    
+    <footer class="bg-gray-800 text-white py-8 mt-auto">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 LUMEON. All rights reserved.</p>
+            <div class="mt-4">
+                <p>Support: <a href="mailto:support@lumeon.website" class="text-amber-400 hover:underline">support@lumeon.website</a></p>
+                <p>Phone: <a href="tel:+911234567890" class="text-amber-400 hover:underline">+91 1234567890</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        setLogLevel('debug');
+
+        // Note: The __firebase_config variable is provided by the environment.
+        // The object below is a fallback for local development.
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyBUUZ4MruQeS0WS4YI8GKokQ4W02q0qjqI",
+            authDomain: "hackthon-6413f.firebaseapp.com",
+            projectId: "hackthon-6413f",
+            storageBucket: "hackthon-6413f.firebasestorage.app",
+            messagingSenderId: "586911560054",
+            appId: "1:586911560054:web:b16b98d667d59bb5ff0a57",
+            measurementId: "G-LTLHTDHJTJ"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const navAuth = document.getElementById('nav-auth');
+
+        const profileNameEl = document.getElementById('profile-name');
+        const profileEmailEl = document.getElementById('profile-email');
+        const profileBioEl = document.getElementById('profile-bio');
+        const profilePhoneEl = document.getElementById('profile-phone');
+        const profilePhotoEl = document.getElementById('profile-photo');
+        const editForm = document.getElementById('edit-profile-form');
+        const messageBox = document.getElementById('message-box');
+
+        async function updateNavProfile(user) {
+            if (user) {
+                const docRef = doc(db, `artifacts/${appId}/users/${user.uid}`);
+                const docSnap = await getDoc(docRef);
+                const profile = docSnap.exists() ? docSnap.data() : { name: "User", photoUrl: "https://placehold.co/150x150/f4d754/333333?text=L" };
+                
+                navAuth.innerHTML = `
+                    <div class="relative group cursor-pointer">
+                        <div class="flex items-center space-x-2">
+                            <img src="${profile.photoUrl}" alt="${profile.name}" class="w-8 h-8 rounded-full border-2 border-amber-500">
+                            <span class="font-medium text-gray-700">${profile.name}</span>
+                        </div>
+                        <div class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl py-2 hidden group-hover:block transition-all duration-300 z-50">
+                            <a href="profile.html?userId=${user.uid}" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">My Profile</a>
+                            <button id="logout-button" class="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">Logout</button>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('logout-button').addEventListener('click', async () => {
+                    await signOut(auth);
+                    window.location.href = 'index.html';
+                });
+            } else {
+                navAuth.innerHTML = `<a href="auth.html" class="bg-amber-500 text-white font-bold py-2 px-4 rounded-full hover:bg-amber-600 transition-colors">Login / Register</a>`;
+            }
+        }
+
+        function showMessage(msg, type) {
+            messageBox.textContent = msg;
+            messageBox.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+            if (type === 'success') {
+                messageBox.classList.add('bg-green-100', 'text-green-700');
+            } else {
+                messageBox.classList.add('bg-red-100', 'text-red-700');
+            }
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 5000);
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            updateNavProfile(user);
+            const urlParams = new URLSearchParams(window.location.search);
+            const profileId = urlParams.get('userId');
+
+            if (user && profileId) {
+                const docRef = doc(db, `artifacts/${appId}/users/${profileId}`);
+                
+                // Use onSnapshot for real-time updates
+                onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const profileData = docSnap.data();
+                        profileNameEl.textContent = profileData.name;
+                        profileEmailEl.textContent = user.email; // Use user.email for consistency
+                        profileBioEl.textContent = profileData.bio;
+                        profilePhoneEl.textContent = profileData.phone;
+                        profilePhotoEl.src = profileData.photoUrl;
+                        profilePhotoEl.alt = profileData.name;
+                    } else {
+                        console.error("No such document!");
+                    }
+                });
+
+                if (user.uid === profileId) {
+                    editForm.classList.remove('hidden');
+                    // Fetch initial data to populate the form
+                    getDoc(docRef).then(docSnap => {
+                        if (docSnap.exists()) {
+                            const profileData = docSnap.data();
+                            document.getElementById('edit-name').value = profileData.name || '';
+                            document.getElementById('edit-phone').value = profileData.phone || '';
+                            document.getElementById('edit-bio').value = profileData.bio || '';
+                            document.getElementById('edit-photoUrl').value = profileData.photoUrl || '';
+                        }
+                    });
+
+                    editForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        const newName = document.getElementById('edit-name').value;
+                        const newPhone = document.getElementById('edit-phone').value;
+                        const newBio = document.getElementById('edit-bio').value;
+                        const newPhotoUrl = document.getElementById('edit-photoUrl').value;
+
+                        try {
+                            await setDoc(docRef, {
+                                name: newName,
+                                phone: newPhone,
+                                bio: newBio,
+                                photoUrl: newPhotoUrl
+                            }, { merge: true });
+                            showMessage('Profile updated successfully!', 'success');
+                        } catch (error) {
+                            console.error("Error updating profile:", error);
+                            showMessage('Error updating profile: ' + error.message, 'error');
+                        }
+                    });
+                } else {
+                    editForm.classList.add('hidden');
+                }
+            } else {
+                profileNameEl.textContent = "Please Log In";
+                profileEmailEl.textContent = "";
+                profileBioEl.textContent = "You need to log in to view a profile page.";
+                profilePhoneEl.textContent = "";
+                editForm.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

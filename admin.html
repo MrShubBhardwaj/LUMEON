@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EngiConnect - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, query, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        setLogLevel('debug');
+
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (typeof __initial_auth_token !== 'undefined') {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+
+            const collections = [
+                { name: 'General Messages', id: 'general-messages', containerId: 'messages-list' },
+                { name: 'Tech Messages', id: 'tech-messages', containerId: 'messages-list' },
+                { name: 'Project Showcase', id: 'projects', containerId: 'projects-list' },
+                { name: 'TeamUp Hub', id: 'teamup', containerId: 'projects-list' },
+                { name: 'Skill Swap', id: 'skills', containerId: 'skills-list' },
+            ];
+
+            const deleteDocument = async (collectionId, docId) => {
+                if (window.confirm("Are you sure you want to delete this item?")) {
+                    try {
+                        await deleteDoc(doc(db, `artifacts/${appId}/public/data/${collectionId}`, docId));
+                        console.log(`Document with ID: ${docId} deleted from collection: ${collectionId}`);
+                    } catch (e) {
+                        console.error("Error removing document: ", e);
+                    }
+                }
+            };
+            window.deleteDocument = deleteDocument; // Make function globally accessible
+
+            collections.forEach(col => {
+                const q = query(collection(db, `artifacts/${appId}/public/data/${col.id}`));
+                onSnapshot(q, (snapshot) => {
+                    const listContainer = document.getElementById(col.containerId);
+                    // Clear existing content for this collection before re-rendering
+                    let existingHeading = listContainer.querySelector(`[data-collection-id="${col.id}"]`);
+                    if (existingHeading) {
+                         existingHeading.nextElementSibling.innerHTML = '';
+                    } else {
+                        const heading = document.createElement('h3');
+                        heading.className = 'text-xl font-bold mt-8 mb-4';
+                        heading.innerText = col.name;
+                        heading.setAttribute('data-collection-id', col.id);
+                        listContainer.appendChild(heading);
+                        
+                        const itemsContainer = document.createElement('div');
+                        listContainer.appendChild(itemsContainer);
+                    }
+                    const itemsContainer = listContainer.querySelector(`div:last-child`);
+                    itemsContainer.innerHTML = '';
+
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'card p-4 rounded-lg flex justify-between items-center mb-2';
+                        itemDiv.innerHTML = `
+                            <div>
+                                <p class="font-semibold">${JSON.stringify(data, null, 2)}</p>
+                                <a href="profile.html?userId=${data.userId}" class="text-sm text-blue-600 hover:underline">View User Profile</a>
+                                <p class="text-xs opacity-60">ID: ${doc.id}</p>
+                            </div>
+                            <button onclick="window.deleteDocument('${col.id}', '${doc.id}')" class="bg-red-500 text-white font-bold p-2 px-4 rounded-full hover:bg-red-600 transition-colors">Delete</button>
+                        `;
+                        itemsContainer.appendChild(itemDiv);
+                    });
+                });
+            });
+        });
+
+        // Moved authentication logic to the main module script
+        onAuthStateChanged(auth, (user) => {
+            const authLink = document.getElementById('auth-link');
+            const profileLink = document.getElementById('profile-link');
+            const logoutButton = document.getElementById('logout-button');
+            if (user) {
+                authLink.classList.add('hidden');
+                profileLink.classList.remove('hidden');
+                profileLink.href = `profile.html?userId=${user.uid}`;
+                logoutButton.classList.remove('hidden');
+            } else {
+                authLink.classList.remove('hidden');
+                profileLink.classList.add('hidden');
+                logoutButton.classList.add('hidden');
+            }
+        });
+        
+        document.getElementById('logout-button').addEventListener('click', async () => {
+            await signOut(auth);
+            window.location.href = 'index.html';
+        });
+
+    </script>
+    <style>
+        :root {
+            --primary-color: #EFEFEF;
+            --secondary-color: #D3D3FF;
+            --text-color: #555555;
+            --background-color: #FFFFFF;
+            --border-color: #AAAAAA;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        
+        header a {
+            color: var(--text-color);
+        }
+        
+        nav a {
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            transition: background-color 0.2s;
+        }
+        
+        nav a:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .card {
+            background-color: var(--secondary-color);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .cta-button {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+        }
+
+        input[type="text"], textarea {
+            background-color: var(--background-color);
+            border-color: var(--border-color);
+            color: var(--text-color);
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-700">
+    <header class="bg-gray-200 text-gray-700 p-4">
+        <div class="container flex justify-between items-center">
+            <h1 class="text-3xl font-bold">EngiConnect</h1>
+            <nav id="main-nav" class="flex gap-4 font-medium">
+                <a href="index.html" class="p-2 rounded-full hover:bg-gray-300 transition-colors">Home</a>
+                <a href="skill-swap.html" class="p-2 rounded-full hover:bg-gray-300 transition-colors">Skill Swap</a>
+                <a href="projects.html" class="p-2 rounded-full hover:bg-gray-300 transition-colors">Projects</a>
+                <a href="community.html" class="p-2 rounded-full hover:bg-gray-300 transition-colors">Community</a>
+                <a href="auth.html" id="auth-link" class="p-2 rounded-full hover:bg-gray-300 transition-colors">Login / Register</a>
+                <a href="#" id="profile-link" class="p-2 rounded-full hover:bg-gray-300 transition-colors hidden">Profile</a>
+                <button id="logout-button" class="p-2 rounded-full hover:bg-gray-300 transition-colors hidden">Log Out</button>
+            </nav>
+        </div>
+    </header>
+    <main class="container py-8">
+        <h2 class="text-4xl font-extrabold text-center mb-4">Admin Dashboard</h2>
+        <p class="text-center text-red-600 font-semibold mb-8">
+            <span class="font-bold">Disclaimer:</span> This is a demo for educational purposes. A real-world application would use
+            <a href="https://firebase.google.com/docs/firestore/security/overview" target="_blank" class="underline">Firestore Security Rules</a> to prevent unauthorized access.
+        </p>
+
+        <div id="messages-list" class="my-8">
+            <!-- Messages and other content will be loaded here -->
+        </div>
+
+        <div id="projects-list" class="my-8">
+            <!-- Projects and TeamUp posts will be loaded here -->
+        </div>
+
+        <div id="skills-list" class="my-8">
+            <!-- Skills posts will be loaded here -->
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUMEON - Authentication</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+        .form-container {
+            max-width: 400px;
+            margin: 4rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="form-container w-full">
+        <div class="flex flex-col items-center mb-6">
+            <a href="index.html" class="flex flex-col items-center space-y-2">
+                <img src="https://i.ibb.co/gL13jDnv/Whats-App-Image-2025-09-13-at-12-14-08-e1e86b28.jpg" alt="LUMEON Logo" class="w-16 h-16 rounded-full" id="site-logo">
+                <span class="text-2xl font-bold text-[#333333]" id="site-name">LUMEON</span>
+            </a>
+            <h1 class="text-xl font-semibold mt-4 text-center">Login or Register</h1>
+        </div>
+
+        <form id="auth-form" class="space-y-4">
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" id="password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+            </div>
+            <div id="auth-message" class="text-sm text-center font-medium"></div>
+            <div class="flex space-x-4">
+                <button type="button" id="login-button" class="w-1/2 flex justify-center py-2 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors">
+                    Login
+                </button>
+                <button type="button" id="register-button" class="w-1/2 flex justify-center py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors">
+                    Register
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Note: The __firebase_config variable is provided by the environment.
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyBUUZ4MruQeS0WS4YI8GKokQ4W02q0qjqI",
+            authDomain: "hackthon-6413f.firebaseapp.com",
+            projectId: "hackthon-6413f",
+            storageBucket: "hackthon-6413f.firebasestorage.app",
+            messagingSenderId: "586911560054",
+            appId: "1:586911560054:web:b16b98d667d59bb5ff0a57",
+            measurementId: "G-LTLHTDHJTJ"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginButton = document.getElementById('login-button');
+        const registerButton = document.getElementById('register-button');
+        const authMessage = document.getElementById('auth-message');
+
+        const showMessage = (message, isError = false) => {
+            authMessage.textContent = message;
+            authMessage.className = isError ? 'text-sm text-red-500 font-medium text-center' : 'text-sm text-green-500 font-medium text-center';
+        };
+
+        const setButtonLoading = (isLoading) => {
+            loginButton.disabled = isLoading;
+            registerButton.disabled = isLoading;
+            loginButton.textContent = isLoading ? 'Loading...' : 'Login';
+            registerButton.textContent = isLoading ? 'Loading...' : 'Register';
+        };
+
+        const redirectToProfile = (userId) => {
+            window.location.href = `profile.html?userId=${userId}`;
+        };
+
+        loginButton.addEventListener('click', async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            if (!email || !password) {
+                showMessage('Please enter both email and password.', true);
+                return;
+            }
+            setButtonLoading(true);
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                showMessage('Login successful! Redirecting...', false);
+                redirectToProfile(userCredential.user.uid);
+            } catch (error) {
+                console.error("Login failed: ", error.code, error.message);
+                showMessage(`Login failed: ${error.message}`, true);
+                setButtonLoading(false);
+            }
+        });
+
+        registerButton.addEventListener('click', async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            if (!email || !password) {
+                showMessage('Please enter both email and password.', true);
+                return;
+            }
+            setButtonLoading(true);
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                // Create a profile document for the new user
+                const userDocRef = doc(db, `artifacts/${appId}/users/${user.uid}`);
+                await setDoc(userDocRef, {
+                    name: "New User",
+                    email: user.email,
+                    photoUrl: "https://placehold.co/150x150/f4d754/333333?text=L",
+                    bio: "Hi there! I'm new to LUMEON."
+                });
+                showMessage('Registration successful! Redirecting...', false);
+                redirectToProfile(user.uid);
+            } catch (error) {
+                console.error("Registration failed: ", error.code, error.message);
+                showMessage(`Registration failed: ${error.message}`, true);
+                setButtonLoading(false);
+            }
+        });
+    </script>
+</body>
+</html>
