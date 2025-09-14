@@ -87,13 +87,7 @@
         setLogLevel('debug');
 
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSyBUUZ4MruQeS0WS4YI8GKokQ4W02q0qjqI",
-            authDomain: "hackthon-6413f.firebaseapp.com",
-            projectId: "hackthon-6413f",
-            storageBucket: "hackthon-6413f.firebasestorage.app",
-            messagingSenderId: "586911560054",
-            appId: "1:586911560054:web:b16b98d667d59bb5ff0a57",
-            measurementId: "G-LTLHTDHJTJ"
+            apiKey: "",
         };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -223,3 +217,4 @@
     </script>
 </body>
 </html>
+
